@@ -1,5 +1,6 @@
 import pygame
 import math
+from enemy import Enemy
 
 #zapnutie hry
 pygame.init()
@@ -10,20 +11,49 @@ SCREEN_HEIGHT = 800
 
 #zapnutie okna hry
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("Castle")
+pygame.display.set_caption("Tower Defence GAME OF THE YEAR 2022 EDITION")
 
 clock = pygame.time.Clock()
 FPS = 60
 
 #load images
-bg = pygame.image.load("back1600.png").convert_alpha()
+bg = pygame.image.load("img/back16002.png").convert_alpha()
 #castle
-castle_image_100 = pygame.image.load("castle.png").convert_alpha()
+castle_image_100 = pygame.image.load("img/castle.png").convert_alpha()
+
 #bullet
-bullet_img = pygame.image.load("bullet.png").convert_alpha()
+bullet_img = pygame.image.load("img/bullet.png").convert_alpha()
 b_w = bullet_img.get_width()
 b_h = bullet_img.get_height()
 bullet_img = pygame.transform.scale(bullet_img, (int(b_w * 2), int(b_h * 2)))
+
+#load enemies
+enemy_animations = []
+enemy_types = ["red"]
+enemy_health = [75]
+
+animation_types = ["walk"]
+for enemy in enemy_types:
+    #load animation
+    animation_list = []
+    for animation in animation_types:
+        #reset temporary list of images
+        temp_list = []
+        num_of_frames = 3
+        for i in range(num_of_frames):
+            img = pygame.image.load(f"img/enemies/{enemy}/{animation}/{i}.png").convert_alpha()
+            e_w = img.get_width()
+            e_h = img.get_height()
+            img = pygame.transform.scale(img, (int(e_w * 2), int(e_h * 2)))
+            temp_list.append(img)
+        animation_list.append(temp_list)
+    enemy_animations.append(animation_list)
+
+
+
+
+
+
 
 #definuj farby
 WHITE = (255,255,255)
@@ -95,8 +125,12 @@ castle = Castle(castle_image_100, SCREEN_WIDTH - 190, SCREEN_HEIGHT - 300, 2.1)
 
 #create groups
 bullet_group = pygame.sprite.Group()
+enemy_group = pygame.sprite.Group()
 
 
+#create enemies
+enemy_1 = Enemy(enemy_health[0], enemy_animations[0], 200, 650, 1)
+enemy_group.add(enemy_1)
 
 #game loop
 run = True
@@ -113,7 +147,9 @@ while run:
     #draw bullet
     bullet_group.update()
     bullet_group.draw(screen)
-    print(len(bullet_group))
+
+    #draw enemies
+    enemy_group.update(screen)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
