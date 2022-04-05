@@ -32,19 +32,19 @@ enemy_animations = []
 enemy_types = ["red"]
 enemy_health = [75]
 
-animation_types = ["walk"]
+animation_types = ["walk", "attack", "death"]
 for enemy in enemy_types:
     #load animation
     animation_list = []
     for animation in animation_types:
         #reset temporary list of images
         temp_list = []
-        num_of_frames = 3
+        num_of_frames = 7
         for i in range(num_of_frames):
             img = pygame.image.load(f"img/enemies/{enemy}/{animation}/{i}.png").convert_alpha()
             e_w = img.get_width()
             e_h = img.get_height()
-            img = pygame.transform.scale(img, (int(e_w * 2), int(e_h * 2)))
+            img = pygame.transform.scale(img, (int(e_w * 2), int(e_h * 2 )))
             temp_list.append(img)
         animation_list.append(temp_list)
     enemy_animations.append(animation_list)
@@ -64,6 +64,8 @@ class Castle():
         self.health = 1000
         self.max_health = self.health
         self.fired = False
+        self.money = 0
+        self.score = 0
 
         width = image100.get_width()
         height = image100.get_height()
@@ -73,12 +75,13 @@ class Castle():
         self.rect.x = x
         self.rect.y = y
 
+
     def shoot(self):
         pos = pygame.mouse.get_pos()
         x_dist = pos[0] - self.rect.midleft[0]+25
         y_dist = -(pos[1] - self.rect.midleft[1])
         self.angle = math.degrees(math.atan2(y_dist, x_dist))
-        print (self.angle)
+        #print (self.angle)
 
         #get mouse click
         if pygame.mouse.get_pressed()[0] and self.fired == False:
@@ -149,7 +152,7 @@ while run:
     bullet_group.draw(screen)
 
     #draw enemies
-    enemy_group.update(screen)
+    enemy_group.update(screen, castle, bullet_group)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
