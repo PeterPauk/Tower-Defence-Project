@@ -16,6 +16,14 @@ pygame.display.set_caption("Tower Defence GAME OF THE YEAR 2022 EDITION")
 clock = pygame.time.Clock()
 FPS = 60
 
+#define premenne
+level = 1
+level_diff = 0
+target_diff = 1000
+ENEMY_TIMER = 1000
+last_enemy = pygame.time.get_ticks()
+enemies_alive = 0
+
 #load images
 bg = pygame.image.load("img/back16002.png").convert_alpha()
 #castle
@@ -166,9 +174,7 @@ bullet_group = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
 
 
-#create enemies
-enemy_1 = Enemy(enemy_health[0], enemy_animations[0], 200, 650, 1)
-enemy_group.add(enemy_1)
+
 
 #game loop
 run = True
@@ -191,6 +197,20 @@ while run:
 
     #draw enemies
     enemy_group.update(screen, castle, bullet_group)
+
+    #create enemies
+    #check if max num if enemies has reached
+
+    if level_diff < target_diff:
+        if pygame.time.get_ticks() - last_enemy > ENEMY_TIMER:
+            #časovač
+            enemy = Enemy(enemy_health[0], enemy_animations[0], -100, 650, 1)
+            enemy_group.add(enemy)
+            #reset enemy timer
+            last_enemy = pygame.time.get_ticks()
+            #zvysenie levelu
+            level_diff += enemy_health[0]
+            
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
