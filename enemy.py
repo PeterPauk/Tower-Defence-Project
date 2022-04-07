@@ -6,6 +6,8 @@ class Enemy(pygame.sprite.Sprite):
         self.alive = True
         self.speed = speed
         self.health = health
+        self.last_attack = pygame.time.get_ticks()
+        self.attack_cooldown = 1000
         self.animation_list = animation_list
         self.frame_index = 0
         self.action = 0 #0 - walk, 1 - action, 2 = death
@@ -36,6 +38,18 @@ class Enemy(pygame.sprite.Sprite):
                 #zmena pozicie rect.
                 self.rect.x += self.speed+1
 
+            #utok
+            if self.action == 1:
+                #check if time has passes
+                if pygame.time.get_ticks() - self.last_attack > self.attack_cooldown:
+                    target.health -= 200
+                    if target.health < 0:
+                        target.health = 0
+                    print(target.health)
+                    self.last_attack = pygame.time.get_ticks()
+
+
+
             #check if healht je menej ako 0
             if self.health <= 0:
                 target.money += 100
@@ -47,7 +61,7 @@ class Enemy(pygame.sprite.Sprite):
         self.update_animation()
 
         # zobrazenie fotky enemaka na obrazovke
-        #pygame.draw.rect(surface, (255,255,255), self.rect, 1)
+
         surface.blit(self.image, (self.rect.x, self.rect.y))  # zobrazenie sprite-tu v rect. - čiže v hitboxe
 
     def update_animation(self):
@@ -75,12 +89,6 @@ class Enemy(pygame.sprite.Sprite):
             #update animation settings
             self.frame_index = 0
             self.update_date = pygame.time.get_ticks()
-
-
-
-
-
-
 
 
 
