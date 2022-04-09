@@ -15,7 +15,7 @@ class Enemy(pygame.sprite.Sprite):
 
         #vyberem začiatočnú fotku
         self.image = self.animation_list[self.action][self.frame_index]
-        self.rect = pygame.Rect(0, 0, 120, 120)
+        self.rect = pygame.Rect(0, 0, 60, 60)
         self.rect.center = (x, y)
 
     def update(self, surface, target, bullet_group):
@@ -89,9 +89,6 @@ class Enemy(pygame.sprite.Sprite):
             #update animation settings
             self.frame_index = 0
             self.update_date = pygame.time.get_ticks()
-
-
-
 
 
 
