@@ -2,6 +2,7 @@ import pygame
 import math
 import random
 from enemy import Enemy
+import button
 
 
 # zapnutie hry
@@ -20,6 +21,7 @@ FPS = 60
 
 # define premenne
 level = 1
+high_score = 0
 level_diff = 0
 target_diff = 1000
 DIFF_MULTIPLIER = 1.1                     #zvysi obtiažnost o 10 percent kazdy level
@@ -29,6 +31,7 @@ ENEMY_TIMER = 1000
 last_enemy = pygame.time.get_ticks()
 enemies_alive = 0
 
+
 # definuj farby
 WHITE = (255, 255, 255)
 GOLD = (229, 184, 11)
@@ -37,6 +40,7 @@ BLACK = (19, 19, 18)
 #definuj font
 font = pygame.font.SysFont("Futura", 30)
 font_60 = pygame.font.SysFont("Futura", 60)
+font_25 = pygame.font.SysFont("Futura", 25)
 
 
 
@@ -77,10 +81,28 @@ for enemy in enemy_types:
         animation_list.append(temp_list)
     enemy_animations.append(animation_list)
 
+#fotky pre tlačitka
+repair_img = pygame.image.load("img/rep.png").convert_alpha()
+armor_img = pygame.image.load("img/armor.png").convert_alpha()
+
+
 #funkcia na output textu na obrazovke
 def draw_text(text, font, text_col, x, y):
     img = font.render(text, True, text_col)
     screen.blit(img, (x,y))
+
+#funkcia pre zobrazovanie udajov
+def show_info():
+    draw_text("Money: " + str(castle.money), font, BLACK, 10, 10)
+    draw_text("Score: " + str(castle.score), font, BLACK, 180, 10)
+    draw_text("High Score: " + str(high_score), font, BLACK, 360, 10)
+    draw_text("Level: " + str(level), font, BLACK, 650, 10)
+    draw_text("Health: " + str(castle.health) + " / " + str(castle.max_health), font, BLACK, SCREEN_WIDTH - 210, 700)
+    draw_text("1000 Money", font_25, BLACK, 1060, 70)
+    draw_text("500 Money", font_25, BLACK, 1190, 70)
+
+
+
 
 
 
@@ -90,7 +112,7 @@ class Castle():
         self.health = 1000
         self.max_health = self.health
         self.fired = False
-        self.money = 0
+        self.money = 5000
         self.score = 0
 
         width = image100.get_width()
@@ -111,7 +133,7 @@ class Castle():
         # print (self.angle)
 
         # get mouse click
-        if pygame.mouse.get_pressed()[0] and self.fired == False:
+        if pygame.mouse.get_pressed()[0] and self.fired == False and pos[1]>70:
             self.fired = True
             bullet = Bullet(bullet_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle)
             bullet_group.add(bullet)
@@ -129,6 +151,18 @@ class Castle():
             self.image = self.image100
 
         screen.blit(self.image, self.rect)
+
+    def repair(self):
+        if self.money >= 1000 and self.health < self.max_health:
+            self.health += 500
+            self.money -= 1000
+            if self.health > self.max_health:
+                self.health = self.max_health
+
+    def armor(self):
+        if self.money >= 500:
+            self.max_health += 250
+            self.money -= 500
 
 
 # bullet class
@@ -157,7 +191,7 @@ class Bullet(pygame.sprite.Sprite):
 
 class Crosshair():
     def __init__(self, scale):
-        image = pygame.image.load("img/cross.png").convert_alpha()
+        image = pygame.image.load("img/cross_2.png").convert_alpha()
         width = image.get_width()
         height = image.get_height()
 
@@ -179,6 +213,10 @@ castle = Castle(castle_image_100, castle_image_50, castle_image_25, SCREEN_WIDTH
 # create cross
 crosshair = Crosshair(0.750)
 
+#vytvorenie tlacidiel
+repair_button = button.Button(1070, 10, repair_img)
+armor_button = button.Button(1200, 10, armor_img)
+
 # create groups
 bullet_group = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
@@ -195,17 +233,30 @@ while run:
     castle.draw()
     castle.shoot()
 
-
-
     # draw bullet
     bullet_group.update()
     bullet_group.draw(screen)
 
+
+
     # draw enemies
     enemy_group.update(screen, castle, bullet_group)
 
+    # tlacitka
+    if repair_button.draw(screen):
+        castle.repair()
+
+
+    if armor_button.draw(screen):
+        castle.armor()
+
     # draw cross
     crosshair.draw()
+
+    #detaily
+    show_info()
+
+
 
     # create enemies
     # check if max num if enemies has reached
@@ -245,6 +296,7 @@ while run:
             last_enemy = pygame.time.get_ticks()
             target_diff *= DIFF_MULTIPLIER
             level_diff = 0
+            FPS += 10
             enemy_group.empty()
 
 
