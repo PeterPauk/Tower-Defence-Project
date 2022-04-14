@@ -4,7 +4,7 @@ class Enemy(pygame.sprite.Sprite):
     def __init__(self, health, animation_list, x, y, speed):
         pygame.sprite.Sprite.__init__(self)
         self.alive = True
-        self.speed = speed
+        self.speed = speed+1
         self.health = health
         self.last_attack = pygame.time.get_ticks()
         self.attack_cooldown = 1000

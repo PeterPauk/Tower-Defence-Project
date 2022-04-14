@@ -21,15 +21,30 @@ FPS = 60
 # define premenne
 level = 1
 level_diff = 0
-target_diff = 1000          #zjavenie enemaka zvysi obtiažnost levelu, dokym to nedosiahne hodnotu 1000
+target_diff = 1000
+DIFF_MULTIPLIER = 1.1                     #zvysi obtiažnost o 10 percent kazdy level
+game_over = False
+next_level = False                        #zjavenie enemaka zvysi obtiažnost levelu, dokym to nedosiahne hodnotu 1000
 ENEMY_TIMER = 1000
 last_enemy = pygame.time.get_ticks()
 enemies_alive = 0
 
+# definuj farby
+WHITE = (255, 255, 255)
+GOLD = (229, 184, 11)
+BLACK = (19, 19, 18)
+
+#definuj font
+font = pygame.font.SysFont("Futura", 30)
+font_60 = pygame.font.SysFont("Futura", 60)
+
+
+
 # load images
 bg = pygame.image.load("img/back16002.png").convert_alpha()
+bg1 = pygame.image.load("img/castle.png").convert_alpha()
 # castle
-castle_image_100 = pygame.image.load("img/castle100.png").convert_alpha()
+castle_image_100 = pygame.image.load("img/hradtest.png").convert_alpha()
 castle_image_50 = pygame.image.load("img/castle50.png").convert_alpha()
 castle_image_25 = pygame.image.load("img/castle25.png").convert_alpha()
 # bullet
@@ -40,8 +55,9 @@ bullet_img = pygame.transform.scale(bullet_img, (int(b_w * 2), int(b_h * 2)))
 
 # load enemies
 enemy_animations = []
-enemy_types = ["red", "blue"]
-enemy_health = [75, 100]
+enemy_types = ["machine", "bandit", "spear"]
+enemy_health = [100, 50, 75]
+enemy_pos = [300, 620, 620]
 
 
 animation_types = ["walk", "attack", "death"]
@@ -61,8 +77,11 @@ for enemy in enemy_types:
         animation_list.append(temp_list)
     enemy_animations.append(animation_list)
 
-# definuj farby
-WHITE = (255, 255, 255)
+#funkcia na output textu na obrazovke
+def draw_text(text, font, text_col, x, y):
+    img = font.render(text, True, text_col)
+    screen.blit(img, (x,y))
+
 
 
 # castle class
@@ -81,8 +100,8 @@ class Castle():
         self.image50 = pygame.transform.scale(image50, (int(width - 50 * scale), int(height - 50 * scale)))
         self.image25 = pygame.transform.scale(image25, (int(width - 50 * scale), int(height - 50 * scale)))
         self.rect = self.image100.get_rect()
-        self.rect.x = x
-        self.rect.y = y
+        self.rect.x = x+-20
+        self.rect.y = y-300
 
     def shoot(self):
         pos = pygame.mouse.get_pos()
@@ -195,13 +214,43 @@ while run:
         if pygame.time.get_ticks() - last_enemy > ENEMY_TIMER:
             # časovač
             e = random.randint(0, len(enemy_types)-1)
-            enemy = Enemy(enemy_health[e], enemy_animations[e], -100, 650, 1)
+
+            enemy = Enemy(enemy_health[e], enemy_animations[e], -100, enemy_pos[e], 1)
+
             enemy_group.add(enemy)
             # reset enemy timer
             last_enemy = pygame.time.get_ticks()
             # zvysenie levelu
             level_diff += enemy_health[e]
-            print(level_diff)
+
+
+    if level_diff >= target_diff:
+        #check how many alive
+        enemies_alive = 0
+        for e in enemy_group:
+            if e.alive == True:
+                enemies_alive += 1
+
+        if enemies_alive == 0 and next_level == False:
+            next_level = True
+            level_reset_time = pygame.time.get_ticks()
+
+    #next level
+    if next_level == True:
+        draw_text("LEVEL COMPLETE!", font_60, BLACK, 500, 350)
+
+        if pygame.time.get_ticks() - level_reset_time > 2000:
+            next_level = False
+            level += 1
+            last_enemy = pygame.time.get_ticks()
+            target_diff *= DIFF_MULTIPLIER
+            level_diff = 0
+            enemy_group.empty()
+
+
+
+
+
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
