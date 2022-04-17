@@ -42,7 +42,7 @@ class Enemy(pygame.sprite.Sprite):
             if self.action == 1:
                 #check if time has passes
                 if pygame.time.get_ticks() - self.last_attack > self.attack_cooldown:
-                    target.health -= 200
+                    target.health -= 50
                     if target.health < 0:
                         target.health = 0
                     print(target.health)
