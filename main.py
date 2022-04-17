@@ -1,6 +1,7 @@
 import pygame
 import math
 import random
+import os
 from enemy import Enemy
 import button
 
@@ -24,7 +25,7 @@ level = 1
 high_score = 0
 level_diff = 0
 target_diff = 1000
-DIFF_MULTIPLIER = 1.1                     #zvysi obtiažnost o 10 percent kazdy level
+DIFF_MULTIPLIER = 1                     #zvysi obtiažnost o 10 percent kazdy level
 game_over = False
 next_level = False                        #zjavenie enemaka zvysi obtiažnost levelu, dokym to nedosiahne hodnotu 1000
 ENEMY_TIMER = 1000
@@ -39,12 +40,16 @@ tower_positions = [
 [350, 150],
 ]
 
-
+#nacitanie high score
+if os.path.exists("score.txt"):
+    with open("score.txt", "r") as file:
+        high_score = int(file.read())
 
 # definuj farby
 WHITE = (255, 255, 255)
 GOLD = (229, 184, 11)
 BLACK = (19, 19, 18)
+RED = (255,0,0)
 
 #definuj font
 font = pygame.font.SysFont("Futura", 30)
@@ -77,9 +82,9 @@ bullet_img = pygame.transform.scale(bullet_img, (int(b_w * 2), int(b_h * 2)))
 
 # load enemies
 enemy_animations = []
-enemy_types = ["machine", "bandit", "spear"]
-enemy_health = [100, 50, 75]
-enemy_pos = [300, 620, 620]
+enemy_types = ["machine", "bandit", "spear", "monster", "barrel"]
+enemy_health = [100, 50, 75, 150, 200]
+enemy_pos = [300, 620, 620, 400, 220]
 
 
 animation_types = ["walk", "attack", "death"]
@@ -99,9 +104,12 @@ for enemy in enemy_types:
         animation_list.append(temp_list)
     enemy_animations.append(animation_list)
 
+
+
 #fotky pre tlačitka
 armor_img = pygame.image.load("img/hpnew.png").convert_alpha()
 repair_img = pygame.image.load("img/hamnew.png").convert_alpha()
+towerb_img = pygame.image.load("img/towerb.png").convert_alpha()
 
 
 #funkcia na output textu na obrazovke
@@ -122,7 +130,7 @@ def show_info():
     draw_text("+500 Health", font_25, BLACK, 1160, 95)
     draw_text("5000 Money", font_25, BLACK, 1280, 75)
     draw_text("+1 Tower", font_25, BLACK, 1290, 95)
-
+    draw_text("4 Towers Max", font_25, BLACK, 1270, 115)
 
 # castle class
 class Castle():
@@ -233,14 +241,6 @@ class Tower(pygame.sprite.Sprite):
 
         screen.blit(self.image, self.rect)
 
-
-
-
-
-
-
-
-
 # bullet class
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, image, x, y, angle):
@@ -292,7 +292,7 @@ crosshair = Crosshair(0.750)
 #vytvorenie tlacidiel
 repair_button = button.Button(1180, 10, repair_img)
 armor_button = button.Button(1050, 10, armor_img)
-tower_button = button.Button(1300, 10, armor_img)
+tower_button = button.Button(1290, 10, towerb_img)
 
 # create groups
 tower_group = pygame.sprite.Group()
@@ -305,98 +305,125 @@ while run:
 
     clock.tick(FPS)
 
-    screen.blit(bg, (0, 0))
+    if game_over == False:
+        screen.blit(bg, (0, 0))
 
-    # draw castle
-    castle.draw()
-    castle.shoot()
+        # draw castle
+        castle.draw()
+        castle.shoot()
 
-    #draw towers
-    tower_group.draw(screen)
-    tower_group.update(enemy_group)
+        #draw towers
+        tower_group.draw(screen)
+        tower_group.update(enemy_group)
 
-    # draw bullet
-    bullet_group.update()
-    bullet_group.draw(screen)
-
-
-
-    # draw enemies
-    enemy_group.update(screen, castle, bullet_group)
+        # draw bullet
+        bullet_group.update()
+        bullet_group.draw(screen)
 
 
-    # tlacitka
-    if repair_button.draw(screen):
-        castle.repair()
+
+        # draw enemies
+        enemy_group.update(screen, castle, bullet_group)
 
 
-    if armor_button.draw(screen):
-        castle.armor()
-
-    if tower_button.draw(screen):
-        if castle.money >= tower_cost and len(tower_group) < max_towers:
-            tower = Tower(
-                tower_image_100,
-                tower_image_50,
-                tower_image_25,
-                tower_positions[len(tower_group)][0],
-                tower_positions[len(tower_group)][1],
-                2.5
-                )
-            tower_group.add(tower)
-
-            castle.money -= tower_cost
+        # tlacitka
+        if repair_button.draw(screen):
+            castle.repair()
 
 
-    # draw cross
-    crosshair.draw()
+        if armor_button.draw(screen):
+            castle.armor()
 
-    #detaily
-    show_info()
+        if tower_button.draw(screen):
+            if castle.money >= tower_cost and len(tower_group) < max_towers:
+                tower = Tower(
+                    tower_image_100,
+                    tower_image_50,
+                    tower_image_25,
+                    tower_positions[len(tower_group)][0],
+                    tower_positions[len(tower_group)][1],
+                    2.5
+                    )
+                tower_group.add(tower)
 
-    # create enemies
-    # check if max num if enemies has reached
-
-    if level_diff < target_diff:
-        if pygame.time.get_ticks() - last_enemy > ENEMY_TIMER:
-            # časovač
-            e = random.randint(0, len(enemy_types)-1)
-
-            enemy = Enemy(enemy_health[e], enemy_animations[e], -100, enemy_pos[e], 1)
-
-            enemy_group.add(enemy)
-            # reset enemy timer
-            last_enemy = pygame.time.get_ticks()
-            # zvysenie levelu
-            level_diff += enemy_health[e]
+                castle.money -= tower_cost
 
 
-    if level_diff >= target_diff:
-        #check how many alive
-        enemies_alive = 0
-        for e in enemy_group:
-            if e.alive == True:
-                enemies_alive += 1
+        # draw cross
+        crosshair.draw()
 
-        if enemies_alive == 0 and next_level == False:
-            next_level = True
-            level_reset_time = pygame.time.get_ticks()
+        #detaily
+        show_info()
 
-    #next level
-    if next_level == True:
-        draw_text("LEVEL COMPLETE!", font_60, BLACK, 500, 350)
+        # create enemies
+        # check if max num if enemies has reached
 
-        if pygame.time.get_ticks() - level_reset_time > 2000:
-            next_level = False
-            level += 1
-            last_enemy = pygame.time.get_ticks()
-            target_diff *= DIFF_MULTIPLIER
+        if level_diff < target_diff:
+            if pygame.time.get_ticks() - last_enemy > ENEMY_TIMER:
+                # časovač
+                e = random.randint(0, len(enemy_types)-1)
+
+                enemy = Enemy(enemy_health[e], enemy_animations[e], -150, enemy_pos[e], 1)
+
+                enemy_group.add(enemy)
+                # reset enemy timer
+                last_enemy = pygame.time.get_ticks()
+                # zvysenie levelu
+                level_diff += enemy_health[e]
+
+
+        if level_diff >= target_diff:
+            #check how many alive
+            enemies_alive = 0
+            for e in enemy_group:
+                if e.alive == True:
+                    enemies_alive += 1
+
+            if enemies_alive == 0 and next_level == False:
+                next_level = True
+                level_reset_time = pygame.time.get_ticks()
+
+        #next level
+        if next_level == True:
+            draw_text("LEVEL COMPLETE!", font_60, WHITE, 500, 350)
+            #aktualizovanie high score
+            if castle.score > high_score:
+                high_score = castle.score
+                with open("score.txt", "w") as file:
+                    file.write(str(high_score))
+
+
+            if pygame.time.get_ticks() - level_reset_time > 2000:
+                next_level = False
+                level += 1
+                last_enemy = pygame.time.get_ticks()
+                target_diff *= DIFF_MULTIPLIER
+                level_diff = 0
+                FPS += 15
+                enemy_group.empty()
+
+        #check game over
+        if castle.health <= 0:
+            game_over = True
+
+    else:
+        draw_text("GAME OVER!", font_60, RED, 500, 350)
+        draw_text("Press A to play again!", font_60, RED, 460, 420)
+        pygame.mouse.set_visible(True)
+        key = pygame.key.get_pressed()
+        if key[pygame.K_a]:
+            game_over = False
+            level = 1
+            target_diff = 1000
             level_diff = 0
-            FPS += 30
+            last_enemy = pygame.time.get_ticks()
             enemy_group.empty()
-
-
-
+            tower_group.empty()
+            castle.score = 0
+            castle.health = 1000
+            castle.max_health = castle.health
+            castle.money = 0
+            pygame.mouse.set_visible(False)
 
 
 
