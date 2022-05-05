@@ -4,6 +4,9 @@ import random
 import os
 from enemy import Enemy
 import button
+import winsound
+
+
 
 
 # zapnutie hry
@@ -20,18 +23,18 @@ pygame.display.set_caption("Tower Defence GAME OF THE YEAR 2022 EDITION")
 clock = pygame.time.Clock()
 FPS = 60
 
-# define premenne
+# zakladne premenne
 level = 1
 high_score = 0
 level_diff = 0
 target_diff = 1000
-DIFF_MULTIPLIER = 1                     #zvysi obtiažnost o 10 percent kazdy level
+DIFF_MULTIPLIER = 1.1                    #zvysi obtiažnost o 10 percent kazdy level
 game_over = False
-next_level = False                        #zjavenie enemaka zvysi obtiažnost levelu, dokym to nedosiahne hodnotu 1000
+next_level = False                        #zjavenie enemaka zvysi obtiažnost levelu,tym že jeho pocet hp vloži do "level" premennej dokym to nedosiahne hodnotu 1000
 ENEMY_TIMER = 1000
 last_enemy = pygame.time.get_ticks()
 enemies_alive = 0
-tower_cost = 5000
+tower_cost = 2000
 max_towers = 4
 tower_positions = [
 [950, 150],
@@ -39,6 +42,7 @@ tower_positions = [
 [550, 150],
 [350, 150],
 ]
+
 
 #nacitanie high score
 if os.path.exists("score.txt"):
@@ -58,9 +62,10 @@ font_25 = pygame.font.SysFont("Futura", 25)
 
 
 
-# load images
-bg = pygame.image.load("img/back16002.png").convert_alpha()
-bg1 = pygame.image.load("img/castle.png").convert_alpha()
+# načitanie fotiek
+bg = pygame.image.load("img/bg.png").convert_alpha()
+bg_eve = pygame.image.load("img/bg_eve.png").convert_alpha()
+bg_night = pygame.image.load("img/bg_night.png").convert_alpha()
 
 # castle
 castle_image_100 = pygame.image.load("img/hrad_100.png").convert_alpha()
@@ -80,7 +85,7 @@ b_w = bullet_img.get_width()
 b_h = bullet_img.get_height()
 bullet_img = pygame.transform.scale(bullet_img, (int(b_w * 2), int(b_h * 2)))
 
-# load enemies
+# načitanie enemakov
 enemy_animations = []
 enemy_types = ["machine", "bandit", "spear", "monster", "barrel"]
 enemy_health = [100, 50, 75, 150, 200]
@@ -89,10 +94,10 @@ enemy_pos = [300, 620, 620, 400, 220]
 
 animation_types = ["walk", "attack", "death"]
 for enemy in enemy_types:
-    # load animation
+    # načitanie animacii
     animation_list = []
     for animation in animation_types:
-        # reset temporary list of images
+        # zresetuje dočasny list animacii
         temp_list = []
         num_of_frames = 7
         for i in range(num_of_frames):
@@ -128,7 +133,7 @@ def show_info():
     draw_text("1000 Money", font_25, BLACK, 1170, 75)
     draw_text("+250 MAX Health", font_25, BLACK, 1010, 95)
     draw_text("+500 Health", font_25, BLACK, 1160, 95)
-    draw_text("5000 Money", font_25, BLACK, 1280, 75)
+    draw_text("2000 Money", font_25, BLACK, 1280, 75)
     draw_text("+1 Tower", font_25, BLACK, 1290, 95)
     draw_text("4 Towers Max", font_25, BLACK, 1270, 115)
 
@@ -138,7 +143,7 @@ class Castle():
         self.health = 1000
         self.max_health = self.health
         self.fired = False
-        self.money = 1055845
+        self.money = 50000
         self.score = 0
 
         width = image100.get_width()
@@ -156,13 +161,14 @@ class Castle():
         x_dist = pos[0] - self.rect.midleft[0] + 25
         y_dist = -(pos[1] - self.rect.midleft[1])
         self.angle = math.degrees(math.atan2(y_dist, x_dist))
-        # print (self.angle)
+        #print (self.angle)
 
-        # get mouse click
+        # klikanie myšky - strielanie
         if pygame.mouse.get_pressed()[0] and self.fired == False and pos[1]>70:
             self.fired = True
             bullet = Bullet(bullet_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle)
             bullet_group.add(bullet)
+            winsound.PlaySound("sounds/shoot.wav", winsound.SND_ASYNC)
         # reset click
         if pygame.mouse.get_pressed()[0] == False:
             self.fired = False
@@ -251,16 +257,16 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.y = y
         self.angle = math.radians(angle)  # zmen uhol na radiany
         self.speed = 10
-        # calculate h and v speed
+        # horizontalna a vertikalna rychlost
         self.dx = math.cos(self.angle) * self.speed
         self.dy = -(math.sin(self.angle) * self.speed)
 
     def update(self):
-        # check if bullet je mimo obrazovky
+        # skontroluje, či je bullet mimo obrazovky
         if self.rect.right < 0 or self.rect.left > SCREEN_WIDTH or self.rect.bottom < 0 or self.rect.top > SCREEN_HEIGHT:
             self.kill()
 
-        # move bullet
+        # pohyb
         self.rect.x += self.dx
         self.rect.y += self.dy
 
@@ -274,7 +280,7 @@ class Crosshair():
         self.image = pygame.transform.scale(image, (int(width * scale), int(height * scale)))
         self.rect = self.image.get_rect()
 
-        # hide mouse
+        # schovanie kurzora
         pygame.mouse.set_visible(False)
 
     def draw(self):
@@ -294,7 +300,7 @@ repair_button = button.Button(1180, 10, repair_img)
 armor_button = button.Button(1050, 10, armor_img)
 tower_button = button.Button(1290, 10, towerb_img)
 
-# create groups
+# vytvorenie groups
 tower_group = pygame.sprite.Group()
 bullet_group = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
@@ -306,7 +312,12 @@ while run:
     clock.tick(FPS)
 
     if game_over == False:
-        screen.blit(bg, (0, 0))
+        if level <= 4:
+            screen.blit(bg, (0, 0))
+        elif level >=5:
+            screen.blit(bg_eve, (0, 0))
+
+
 
         # draw castle
         castle.draw()
@@ -322,7 +333,7 @@ while run:
 
 
 
-        # draw enemies
+        # draw enemaci
         enemy_group.update(screen, castle, bullet_group)
 
 
@@ -355,8 +366,7 @@ while run:
         #detaily
         show_info()
 
-        # create enemies
-        # check if max num if enemies has reached
+        # toto bude kontrolovat, či sa dosiahol max počet enemakov
 
         if level_diff < target_diff:
             if pygame.time.get_ticks() - last_enemy > ENEMY_TIMER:
@@ -366,14 +376,14 @@ while run:
                 enemy = Enemy(enemy_health[e], enemy_animations[e], -150, enemy_pos[e], 1)
 
                 enemy_group.add(enemy)
-                # reset enemy timer
+                # zresetuje časovač
                 last_enemy = pygame.time.get_ticks()
                 # zvysenie levelu
                 level_diff += enemy_health[e]
 
 
         if level_diff >= target_diff:
-            #check how many alive
+            #skontoluje kolko enemakov stale žije
             enemies_alive = 0
             for e in enemy_group:
                 if e.alive == True:
@@ -402,6 +412,7 @@ while run:
                 FPS += 15
                 enemy_group.empty()
 
+
         #check game over
         if castle.health <= 0:
             game_over = True
@@ -423,6 +434,7 @@ while run:
             castle.health = 1000
             castle.max_health = castle.health
             castle.money = 0
+            FPS = 60
             pygame.mouse.set_visible(False)
 
 
