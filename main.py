@@ -7,8 +7,6 @@ import button
 import winsound
 
 
-
-
 # zapnutie hry
 pygame.init()
 
@@ -30,7 +28,7 @@ level_diff = 0
 target_diff = 1000
 DIFF_MULTIPLIER = 1.1                    #zvysi obtiažnost o 10 percent kazdy level
 game_over = False
-next_level = False                        #zjavenie enemaka zvysi obtiažnost levelu,tym že jeho pocet hp vloži do "level" premennej dokym to nedosiahne hodnotu 1000
+next_level = False                        #zjavenie enemaka zvysi obtiažnost levelu, dokym to nedosiahne hodnotu 1000
 ENEMY_TIMER = 1000
 last_enemy = pygame.time.get_ticks()
 enemies_alive = 0
@@ -42,7 +40,6 @@ tower_positions = [
 [550, 150],
 [350, 150],
 ]
-
 
 #nacitanie high score
 if os.path.exists("score.txt"):
@@ -124,18 +121,32 @@ def draw_text(text, font, text_col, x, y):
 
 #funkcia pre zobrazovanie udajov
 def show_info():
-    draw_text("Money: " + str(castle.money), font, BLACK, 10, 10)
-    draw_text("Score: " + str(castle.score), font, BLACK, 180, 10)
-    draw_text("High Score: " + str(high_score), font, BLACK, 360, 10)
-    draw_text("Level: " + str(level), font, BLACK, 650, 10)
-    draw_text("Health: " + str(castle.health) + " / " + str(castle.max_health), font, BLACK, SCREEN_WIDTH - 210, 700)
-    draw_text("500 Money", font_25, BLACK, 1040, 75)
-    draw_text("1000 Money", font_25, BLACK, 1170, 75)
-    draw_text("+250 MAX Health", font_25, BLACK, 1010, 95)
-    draw_text("+500 Health", font_25, BLACK, 1160, 95)
-    draw_text("2000 Money", font_25, BLACK, 1280, 75)
-    draw_text("+1 Tower", font_25, BLACK, 1290, 95)
-    draw_text("4 Towers Max", font_25, BLACK, 1270, 115)
+    if level < 7:
+        draw_text("Money: " + str(castle.money), font, BLACK, 10, 10)
+        draw_text("Score: " + str(castle.score), font, BLACK, 180, 10)
+        draw_text("High Score: " + str(high_score), font, BLACK, 360, 10)
+        draw_text("Level: " + str(level), font, BLACK, 650, 10)
+        draw_text("Health: " + str(castle.health) + " / " + str(castle.max_health), font, BLACK, SCREEN_WIDTH - 210, 700)
+        draw_text("500 Money", font_25, BLACK, 1040, 75)
+        draw_text("1000 Money", font_25, BLACK, 1170, 75)
+        draw_text("+250 MAX Health", font_25, BLACK, 1010, 95)
+        draw_text("+500 Health", font_25, BLACK, 1160, 95)
+        draw_text("2000 Money", font_25, BLACK, 1280, 75)
+        draw_text("+1 Tower", font_25, BLACK, 1290, 95)
+        draw_text("4 Towers Max", font_25, BLACK, 1270, 115)
+    else:
+        draw_text("Money: " + str(castle.money), font,WHITE, 10, 10)
+        draw_text("Score: " + str(castle.score), font, WHITE, 180, 10)
+        draw_text("High Score: " + str(high_score), font, WHITE, 360, 10)
+        draw_text("Level: " + str(level), font, WHITE, 650, 10)
+        draw_text("Health: " + str(castle.health) + " / " + str(castle.max_health), font, BLACK, SCREEN_WIDTH - 210, 700)
+        draw_text("500 Money", font_25, WHITE, 1040, 75)
+        draw_text("1000 Money", font_25, WHITE, 1170, 75)
+        draw_text("+250 MAX Health", font_25, WHITE, 1010, 95)
+        draw_text("+500 Health", font_25, WHITE, 1160, 95)
+        draw_text("2000 Money", font_25, WHITE, 1280, 75)
+        draw_text("+1 Tower", font_25, WHITE, 1290, 95)
+        draw_text("4 Towers Max", font_25, WHITE, 1270, 115)
 
 # castle class
 class Castle():
@@ -143,7 +154,7 @@ class Castle():
         self.health = 1000
         self.max_health = self.health
         self.fired = False
-        self.money = 50000
+        self.money = 10000
         self.score = 0
 
         width = image100.get_width()
@@ -161,14 +172,14 @@ class Castle():
         x_dist = pos[0] - self.rect.midleft[0] + 25
         y_dist = -(pos[1] - self.rect.midleft[1])
         self.angle = math.degrees(math.atan2(y_dist, x_dist))
-        #print (self.angle)
+        print (self.angle)
 
         # klikanie myšky - strielanie
         if pygame.mouse.get_pressed()[0] and self.fired == False and pos[1]>70:
             self.fired = True
             bullet = Bullet(bullet_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle)
             bullet_group.add(bullet)
-            winsound.PlaySound("sounds/shoot.wav", winsound.SND_ASYNC)
+            #winsound.PlaySound("sounds/shoot.wav", winsound.SND_ASYNC)
         # reset click
         if pygame.mouse.get_pressed()[0] == False:
             self.fired = False
@@ -312,10 +323,12 @@ while run:
     clock.tick(FPS)
 
     if game_over == False:
-        if level <= 4:
+        if level <= 3:
             screen.blit(bg, (0, 0))
-        elif level >=5:
+        elif level <7:
             screen.blit(bg_eve, (0, 0))
+        elif level>=7:
+            screen.blit(bg_night, (0,0))
 
 
 
@@ -412,10 +425,14 @@ while run:
                 FPS += 15
                 enemy_group.empty()
 
-
         #check game over
         if castle.health <= 0:
             game_over = True
+
+
+
+
+
 
     else:
         draw_text("GAME OVER!", font_60, RED, 500, 350)
