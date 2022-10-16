@@ -40,11 +40,9 @@ tower_positions = [
 [550, 150],
 [350, 150],
 ]
-
-#nacitanie high score
-if os.path.exists("score.txt"):
-    with open("score.txt", "r") as file:
-        high_score = int(file.read())
+upgrade = 0
+nothing = 0
+bodiky = 0  #ked kliknes na fire button, dostanes bodiky. Toto mam na to, aby sa mi ukazovali dalsie buttony "power upov"" napriek nizsej upgrade hodnote
 
 # definuj farby
 WHITE = (255, 255, 255)
@@ -60,16 +58,20 @@ font_25 = pygame.font.SysFont("Futura", 25)
 
 
 # načitanie fotiek
-bg = pygame.image.load("img/bg.png").convert_alpha()
-bg_eve = pygame.image.load("img/bg_eve.png").convert_alpha()
-bg_night = pygame.image.load("img/bg_night.png").convert_alpha()
+bg = pygame.image.load("img/bg_new.png").convert_alpha()
+bg_eve = pygame.image.load("img/bg_eve_new.png").convert_alpha()
+bg_night = pygame.image.load("img/bg_night_new.png").convert_alpha()
 
 # castle
+castle_image_300 = pygame.image.load("img/hrad_300.png").convert_alpha()
+castle_image_200 = pygame.image.load("img/hrad_200.png").convert_alpha()
 castle_image_100 = pygame.image.load("img/hrad_100.png").convert_alpha()
 castle_image_50 = pygame.image.load("img/hrad_50.png").convert_alpha()
 castle_image_25 = pygame.image.load("img/hrad_25.png").convert_alpha()
 
 # tower
+tower_image_300 = pygame.image.load("img/hrad_300.png").convert_alpha()
+tower_image_200 = pygame.image.load("img/hrad_200.png").convert_alpha()
 tower_image_100 = pygame.image.load("img/hrad_100.png").convert_alpha()
 tower_image_50 = pygame.image.load("img/hrad_50.png").convert_alpha()
 tower_image_25 = pygame.image.load("img/hrad_25.png").convert_alpha()
@@ -81,6 +83,13 @@ bullet_img = pygame.image.load("img/bullet.png").convert_alpha()
 b_w = bullet_img.get_width()
 b_h = bullet_img.get_height()
 bullet_img = pygame.transform.scale(bullet_img, (int(b_w * 2), int(b_h * 2)))
+fire_img = pygame.image.load("img/fire.png").convert_alpha()
+unknown_img = pygame.image.load("img/unknown.png").convert_alpha()
+cluster_img = pygame.image.load("img/cluster.png").convert_alpha()
+#cluster_img = pygame.transform.scale(cluster_img, (int(b_w * 5), int(b_h * 5)))
+ice_img = pygame.image.load("img/ice.png").convert_alpha()
+buck_img = pygame.image.load("img/buck.png").convert_alpha()
+on_img = pygame.image.load("img/on.png").convert_alpha()
 
 # načitanie enemakov
 enemy_animations = []
@@ -124,7 +133,6 @@ def show_info():
     if level < 7:
         draw_text("Money: " + str(castle.money), font, BLACK, 10, 10)
         draw_text("Score: " + str(castle.score), font, BLACK, 180, 10)
-        draw_text("High Score: " + str(high_score), font, BLACK, 360, 10)
         draw_text("Level: " + str(level), font, BLACK, 650, 10)
         draw_text("Health: " + str(castle.health) + " / " + str(castle.max_health), font, BLACK, SCREEN_WIDTH - 210, 700)
         draw_text("500 Money", font_25, BLACK, 1040, 75)
@@ -132,12 +140,25 @@ def show_info():
         draw_text("+250 MAX Health", font_25, BLACK, 1010, 95)
         draw_text("+500 Health", font_25, BLACK, 1160, 95)
         draw_text("2000 Money", font_25, BLACK, 1280, 75)
+
+        draw_text("1000 Money", font_25, BLACK, 110, 95)
+        draw_text("Fireballs", font_25, BLACK, 110, 75)
+
+        draw_text("Cluster Ammo", font_25, BLACK, 290, 75)
+        draw_text("2000 Money", font_25, BLACK, 290, 95)
+
+        draw_text("Iceballs", font_25, BLACK, 495, 75)
+        draw_text("3000 Money", font_25, BLACK, 495, 95)
+
+        draw_text("Buckshot Ammo", font_25, BLACK, 670, 75)
+        draw_text("4000 Money", font_25, BLACK, 670, 95)
+
         draw_text("+1 Tower", font_25, BLACK, 1290, 95)
         draw_text("4 Towers Max", font_25, BLACK, 1270, 115)
+
     else:
         draw_text("Money: " + str(castle.money), font,WHITE, 10, 10)
         draw_text("Score: " + str(castle.score), font, WHITE, 180, 10)
-        draw_text("High Score: " + str(high_score), font, WHITE, 360, 10)
         draw_text("Level: " + str(level), font, WHITE, 650, 10)
         draw_text("Health: " + str(castle.health) + " / " + str(castle.max_health), font, BLACK, SCREEN_WIDTH - 210, 700)
         draw_text("500 Money", font_25, WHITE, 1040, 75)
@@ -148,18 +169,35 @@ def show_info():
         draw_text("+1 Tower", font_25, WHITE, 1290, 95)
         draw_text("4 Towers Max", font_25, WHITE, 1270, 115)
 
+        draw_text("1000 Money", font_25, WHITE, 110, 95)
+        draw_text("Fireballs", font_25, WHITE, 110, 75)
+
+        draw_text("Cluster Ammo", font_25, WHITE, 290, 75)
+        draw_text("2000 Money", font_25, WHITE, 290, 95)
+
+        draw_text("Iceballs", font_25, WHITE, 495, 75)
+        draw_text("3000 Money", font_25, WHITE, 495, 95)
+
+        draw_text("Buckshot Ammo", font_25, WHITE, 670, 75)
+        draw_text("4000 Money", font_25, WHITE, 670, 95)
+
+
+
 # castle class
 class Castle():
-    def __init__(self, image100, image50, image25, x, y, scale):
+    def __init__(self, image300, image200, image100, image50, image25, x, y, scale):
         self.health = 1000
         self.max_health = self.health
         self.fired = False
-        self.money = 10000
+        self.money = 0
         self.score = 0
+
 
         width = image100.get_width()
         height = image100.get_height()
 
+        self.image300 = pygame.transform.scale(image300, (int(width - 40 * scale), int(height - 50 * scale)))
+        self.image200 = pygame.transform.scale(image200, (int(width - 40 * scale), int(height - 50 * scale)))
         self.image100 = pygame.transform.scale(image100, (int(width - 40 * scale), int(height - 50 * scale)))
         self.image50 = pygame.transform.scale(image50, (int(width - 40 * scale), int(height - 50 * scale)))
         self.image25 = pygame.transform.scale(image25, (int(width - 40 * scale), int(height - 50 * scale)))
@@ -172,14 +210,47 @@ class Castle():
         x_dist = pos[0] - self.rect.midleft[0] + 25
         y_dist = -(pos[1] - self.rect.midleft[1])
         self.angle = math.degrees(math.atan2(y_dist, x_dist))
-        print (self.angle)
+        #print (self.angle)
 
         # klikanie myšky - strielanie
-        if pygame.mouse.get_pressed()[0] and self.fired == False and pos[1]>70:
+        if pygame.mouse.get_pressed()[0] and self.fired == False and pos[1]>120:
             self.fired = True
-            bullet = Bullet(bullet_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle)
-            bullet_group.add(bullet)
-            #winsound.PlaySound("sounds/shoot.wav", winsound.SND_ASYNC)
+            if upgrade < 1:
+                bullet = Bullet(bullet_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle)
+                bullet_group.add(bullet)
+                #winsound.PlaySound("sounds/shoot.wav", winsound.SND_ASYNC)
+            if upgrade == 1:
+                fire = Fire(fire_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle, 10)
+                fire_group.add(fire)
+                #winsound.PlaySound("sounds/shoot.wav", winsound.SND_ASYNC)
+            if upgrade == 2:
+                bullet = Bullet(bullet_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle)
+                bullet_group.add(bullet)
+                bullet1 = Bullet(bullet_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle + 25)
+                bullet_group.add(bullet1)
+                bullet2 = Bullet(bullet_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle -25)
+                bullet_group.add(bullet2)
+            if upgrade == 3:
+                ice = Ice(ice_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle, 10)
+                ice_group.add(ice)
+               # winsound.PlaySound("sounds/shoot.wav", winsound.SND_ASYNC)
+            if upgrade == 4:
+                bullet = Bullet(bullet_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle)
+                bullet_group.add(bullet)
+                bullet1 = Bullet(bullet_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle + 15)
+                bullet_group.add(bullet1)
+                bullet2 = Bullet(bullet_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle - 15)
+                bullet_group.add(bullet2)
+                bullet3 = Bullet(bullet_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle + 30)
+                bullet_group.add(bullet3)
+                bullet4 = Bullet(bullet_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle - 30)
+                bullet_group.add(bullet4)
+                bullet5 = Bullet(bullet_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle + 45)
+                bullet_group.add(bullet5)
+                bullet6 = Bullet(bullet_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle - 45)
+                bullet_group.add(bullet6)
+
+
         # reset click
         if pygame.mouse.get_pressed()[0] == False:
             self.fired = False
@@ -190,8 +261,12 @@ class Castle():
             self.image = self.image25
         elif self.health <= 500:
             self.image = self.image50
-        else:
+        elif self.health <= 1000 and self.health < 2000:
             self.image = self.image100
+        elif self.health >= 2000 and self.health < 3000:
+            self.image = self.image200
+        elif self.health >= 3000:
+            self.image = self.image300
 
         screen.blit(self.image, self.rect)
 
@@ -207,18 +282,27 @@ class Castle():
             self.max_health += 250
             self.money -= 500
 
+
+
+
+
+
+
 #tower class
 class Tower(pygame.sprite.Sprite):
-    def __init__(self, image100, image50, image25, x, y, scale):
+    def __init__(self, image300, image200, image100, image50, image25, x, y, scale):
         pygame.sprite.Sprite.__init__(self)
 
         self.target_found = False
         self.angle = 0
         self.last_shot = pygame.time.get_ticks()
 
+
         width = image100.get_width()
         height = image100.get_height()
 
+        self.image300 = pygame.transform.scale(image300, (int(width - 40 * scale), int(height - 50 * scale)))
+        self.image200 = pygame.transform.scale(image200, (int(width - 40 * scale), int(height - 50 * scale)))
         self.image100 = pygame.transform.scale(image100, (int(width - 40 * scale), int(height - 50 * scale)))
         self.image50 = pygame.transform.scale(image50, (int(width - 40 * scale), int(height - 50 * scale)))
         self.image25 = pygame.transform.scale(image25, (int(width - 40 * scale), int(height - 50 * scale)))
@@ -246,15 +330,49 @@ class Tower(pygame.sprite.Sprite):
             #strielanie strel
             if pygame.time.get_ticks() - self.last_shot > shot_cooldown:
                 self.last_shot = pygame.time.get_ticks()
-                bullet = Bullet(bullet_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle)
-                bullet_group.add(bullet)
+                if upgrade == 0:
+                    bullet = Bullet(bullet_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle)
+                    bullet_group.add(bullet)
+                if upgrade == 1:
+                    fire = Fire(fire_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle, 10)
+                    fire_group.add(fire)
+                if upgrade == 2:
+                    bullet = Bullet(bullet_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle)
+                    bullet_group.add(bullet)
+                    bullet1 = Bullet(bullet_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle + 25)
+                    bullet_group.add(bullet1)
+                    bullet2 = Bullet(bullet_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle - 25)
+                    bullet_group.add(bullet2)
+                if upgrade ==3:
+                    ice = Ice(ice_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle, 10)
+                    ice_group.add(ice)
+                if upgrade == 4:
+                    bullet = Bullet(bullet_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle)
+                    bullet_group.add(bullet)
+                    bullet1 = Bullet(bullet_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle + 15)
+                    bullet_group.add(bullet1)
+                    bullet2 = Bullet(bullet_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle - 15)
+                    bullet_group.add(bullet2)
+                    bullet3 = Bullet(bullet_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle + 30)
+                    bullet_group.add(bullet3)
+                    bullet4 = Bullet(bullet_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle - 30)
+                    bullet_group.add(bullet4)
+                    bullet5 = Bullet(bullet_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle + 45)
+                    bullet_group.add(bullet5)
+                    bullet6 = Bullet(bullet_img, self.rect.midleft[0] + 25, self.rect.midleft[1], self.angle - 45)
+                    bullet_group.add(bullet6)
+
 
         if castle.health <= 250:
             self.image = self.image25
         elif castle.health <= 500:
             self.image = self.image50
-        else:
+        elif castle.health <= 1000 and castle.health < 2000:
             self.image = self.image100
+        elif castle.health >= 2000 and castle.health < 3000:
+            self.image = self.image200
+        elif castle.health >= 3000:
+            self.image = self.image300
 
         screen.blit(self.image, self.rect)
 
@@ -281,6 +399,15 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.x += self.dx
         self.rect.y += self.dy
 
+class Fire(Bullet):
+    def __init__(self, image, x, y, angle, knockback):
+        super().__init__(image, x, y, angle)
+        self.knockback = knockback
+
+class Ice(Bullet):
+    def __init__(self, image, x, y, angle, knockback):
+        super().__init__(image, x, y, angle)
+        self.knockback = knockback
 
 class Crosshair():
     def __init__(self, scale):
@@ -301,7 +428,7 @@ class Crosshair():
 
 
 # create castle
-castle = Castle(castle_image_100, castle_image_50, castle_image_25, SCREEN_WIDTH - 190, SCREEN_HEIGHT - 300, 2.1)
+castle = Castle(castle_image_300, castle_image_200, castle_image_100, castle_image_50, castle_image_25, SCREEN_WIDTH - 190, SCREEN_HEIGHT - 300, 2.1)
 
 # create cross
 crosshair = Crosshair(0.750)
@@ -310,10 +437,23 @@ crosshair = Crosshair(0.750)
 repair_button = button.Button(1180, 10, repair_img)
 armor_button = button.Button(1050, 10, armor_img)
 tower_button = button.Button(1290, 10, towerb_img)
+fire_button = button.Button(40, 45, fire_img)
+unknown_button = button.Button(220, 45, unknown_img)
+unknown1_button = button.Button(400, 45, unknown_img)
+cluster_button = button.Button(220, 45, cluster_img)
+ice_button = button.Button(425, 35, ice_img)
+buck_button = button.Button(600, 35, buck_img)
+
+on_button = button.Button(52, 130, on_img)
+on_button1 = button.Button(247, 130, on_img)
+on_button2 = button.Button(440, 130, on_img)
+on_button3= button.Button(615, 130, on_img)
 
 # vytvorenie groups
 tower_group = pygame.sprite.Group()
 bullet_group = pygame.sprite.Group()
+fire_group = pygame.sprite.Group()
+ice_group = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
 
 # game loop
@@ -331,7 +471,6 @@ while run:
             screen.blit(bg_night, (0,0))
 
 
-
         # draw castle
         castle.draw()
         castle.shoot()
@@ -344,10 +483,14 @@ while run:
         bullet_group.update()
         bullet_group.draw(screen)
 
+        fire_group.update()
+        fire_group.draw(screen)
 
+        ice_group.update()
+        ice_group.draw(screen)
 
         # draw enemaci
-        enemy_group.update(screen, castle, bullet_group)
+        enemy_group.update(screen, castle, bullet_group, fire_group, ice_group)
 
 
         # tlacitka
@@ -361,6 +504,8 @@ while run:
         if tower_button.draw(screen):
             if castle.money >= tower_cost and len(tower_group) < max_towers:
                 tower = Tower(
+                    tower_image_300,
+                    tower_image_200,
                     tower_image_100,
                     tower_image_50,
                     tower_image_25,
@@ -371,6 +516,50 @@ while run:
                 tower_group.add(tower)
 
                 castle.money -= tower_cost
+
+        if fire_button.draw(screen):
+            if castle.money >= 1000:
+                castle.money -= 1000
+                upgrade = 1
+
+        #prva faza power - upov
+
+
+        if cluster_button.draw(screen):
+            if castle.money >= 2000:
+                upgrade = 2
+                castle.money -= 2000
+
+
+        #druha faza
+
+
+        if ice_button.draw(screen):
+            if castle.money >= 3000:
+                upgrade = 3
+                castle.money -= 3000
+
+        if buck_button.draw(screen):
+            if castle.money >= 4000:
+                upgrade = 4
+                castle.money -= 4000
+
+        if upgrade == 1:
+            if on_button.draw(screen):
+                nothing += 10
+
+        if upgrade == 2:
+            if on_button1.draw(screen):
+                nothing += 10
+
+        if upgrade == 3:
+            if on_button2.draw(screen):
+                nothing += 10
+
+        if upgrade == 4:
+            if on_button3.draw(screen):
+                nothing += 10
+
 
 
         # draw cross
@@ -406,14 +595,12 @@ while run:
                 next_level = True
                 level_reset_time = pygame.time.get_ticks()
 
+
+
         #next level
         if next_level == True:
             draw_text("LEVEL COMPLETE!", font_60, WHITE, 500, 350)
-            #aktualizovanie high score
-            if castle.score > high_score:
-                high_score = castle.score
-                with open("score.txt", "w") as file:
-                    file.write(str(high_score))
+
 
 
             if pygame.time.get_ticks() - level_reset_time > 2000:
@@ -422,17 +609,17 @@ while run:
                 last_enemy = pygame.time.get_ticks()
                 target_diff *= DIFF_MULTIPLIER
                 level_diff = 0
+                castle.money += 1000
                 FPS += 15
                 enemy_group.empty()
+
+        kluc = pygame.key.get_pressed()
+        if kluc[pygame.K_c]:
+            castle.money += 1000
 
         #check game over
         if castle.health <= 0:
             game_over = True
-
-
-
-
-
 
     else:
         draw_text("GAME OVER!", font_60, RED, 500, 350)
@@ -451,6 +638,7 @@ while run:
             castle.health = 1000
             castle.max_health = castle.health
             castle.money = 0
+            upgrade = 0
             FPS = 60
             pygame.mouse.set_visible(False)
 
